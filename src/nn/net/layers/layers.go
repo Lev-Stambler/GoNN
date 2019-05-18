@@ -70,9 +70,9 @@ func BackProp(expected []float64, layersInst *NormalLayers) error {
 		for i, neurons := range layersInst.Layers[layerNumb] {
 			if layerNumb == len(layersInst.Layers)-1 {
 				result = layersInst.CurrVals[layerNumb][i]
-				dTotaldRes = 2 * (result - expected[i])
-				dResdSum = result * (1 - result)
+				dTotaldRes = (result - expected[i]) * 2
 			}
+			dResdSum = layersInst.CurrVals[layerNumb][i] * (1 - layersInst.CurrVals[layerNumb][i])
 			for x, weight := range neurons {
 				// update offset
 				if x == len(layersInst.Layers[layerNumb][i])-1 {
@@ -84,7 +84,7 @@ func BackProp(expected []float64, layersInst *NormalLayers) error {
 					dTotaldWeight := dSumdWeight * dResdSum * dTotaldRes
 					// fmt.Println(dTotaldWeight, dTotaldRes, result, dResdSum, dSumdWeight)
 					layersInst.Layers[layerNumb][i][x] = weight - lrate*dTotaldWeight
-					newdTotaldRes += dSumdWeight * dResdSum * weight
+					newdTotaldRes += dTotaldRes * dResdSum * weight // weight is dSumdRes(-1)
 				}
 			}
 		}

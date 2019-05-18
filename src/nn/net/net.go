@@ -33,3 +33,7 @@ func Run(nn *Net, input []float64) []float64 {
 	layers.RunForward(input, &(nn.NLayer))
 	return nn.NLayer.CurrVals[len(nn.NLayer.CurrVals)-1]
 }
+
+func Set_lstep(nn *Net, lstepNew float64) {
+	nn.NLayer.Lstep_main = lstepNew
+}
