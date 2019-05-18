@@ -55,13 +55,12 @@ func CalculateCost(expected []float64, layersInst *NormalLayers) float64 {
 	return costVal
 }
 
-func BackProp(expected []float64, layersInst *NormalLayers) error {
+// returns dTotaldRes for the first layer
+func BackProp(expected []float64, layersInst *NormalLayers) float64 {
 	lrate := layersInst.Lstep_main
 	if len(layersInst.CurrVals[len(layersInst.CurrVals)-1]) != len(expected) {
 		panic("expected has to be proper length")
 	}
-	// cost := CalculateCost(expected)
-	// for endLayerNeuron := len(expected) - 1; endLayerNeuron >= 0; endLayerNeuron-- {
 	result := 0.0
 	dTotaldRes := 0.0
 	dResdSum := 0.0
@@ -90,11 +89,37 @@ func BackProp(expected []float64, layersInst *NormalLayers) error {
 		}
 		dTotaldRes = newdTotaldRes
 	}
-	// }
-	return nil
+	return dTotaldRes
 }
 
-func RunForward(inputs []float64, layersInst *NormalLayers) error {
+func BackProp_StartingCostDerriv(layersInst *NormalLayers, dTotaldRes float64) float64 {
+	lrate := layersInst.Lstep_main
+	dResdSum := 0.0
+	for layerNumb := len(layersInst.Layers) - 1; layerNumb >= 1; layerNumb-- {
+		newdTotaldRes := 0.0
+		for i, neurons := range layersInst.Layers[layerNumb] {
+			dResdSum = layersInst.CurrVals[layerNumb][i] * (1 - layersInst.CurrVals[layerNumb][i])
+			for x, weight := range neurons {
+				// update offset
+				if x == len(layersInst.Layers[layerNumb][i])-1 {
+					dSumdB := 1.0
+					dTotaldB := dSumdB * dResdSum * dTotaldRes
+					layersInst.Layers[layerNumb][i][x] = layersInst.Layers[layerNumb][i][x] - lrate*dTotaldB
+				} else {
+					dSumdWeight := layersInst.CurrVals[layerNumb-1][x] // Issue?
+					dTotaldWeight := dSumdWeight * dResdSum * dTotaldRes
+					// fmt.Println(dTotaldWeight, dTotaldRes, result, dResdSum, dSumdWeight)
+					layersInst.Layers[layerNumb][i][x] = weight - lrate*dTotaldWeight
+					newdTotaldRes += dTotaldRes * dResdSum * weight // weight is dSumdRes(-1)
+				}
+			}
+		}
+		dTotaldRes = newdTotaldRes
+	}
+	return dTotaldRes
+}
+
+func RunForward(layersInst *NormalLayers, inputs []float64) error {
 	currVals := make([][]float64, len(layersInst.Layers))
 	currSums := make([][]float64, len(layersInst.Layers))
 
